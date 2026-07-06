@@ -518,9 +518,5 @@ See the [LICENSE](LICENSE) file for details.
 
 GitHub: https://github.com/Gladiespriyanka
 
-## License
-
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
-
 
 If you found this project useful, consider giving it a ⭐ on GitHub.
