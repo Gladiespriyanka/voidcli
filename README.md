@@ -1,22 +1,46 @@
 # VOIDCLI
 
-A conversational terminal AI agent that uses Gemini and a ReAct-style execution loop to generate websites, clone homepages, edit existing projects, and launch instant previews.
+> A conversational AI-powered terminal agent that can generate websites, clone public homepages, edit existing projects, and launch instant previews using a structured ReAct-style reasoning loop powered by Gemini.
 
-VOIDCLI operates using structured reasoning steps:
-
-- START
-- THINK
-- TOOL
-- OBSERVE
-- OUTPUT
+![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue)
+![Node.js](https://img.shields.io/badge/Node.js-20+-green)
+![Gemini](https://img.shields.io/badge/Google-Gemini-orange)
+![License](https://img.shields.io/badge/License-MIT-yellow)
 
 ---
 
-# Features
+## Overview
 
-## 🌐 Homepage Cloning
+VOIDCLI is an AI terminal assistant that uses a strict ReAct workflow to reason, plan, execute tools, and generate outputs.
 
-Clone any public homepage by simply pasting a URL.
+The agent can:
+
+- Generate complete websites from prompts
+- Clone public homepages
+- Download and localize website assets
+- Edit generated websites
+- Launch instant previews
+- Execute multi-step workflows through tool use
+
+VOIDCLI follows a structured execution loop:
+
+```text
+START
+THINK
+TOOL
+OBSERVE
+OUTPUT
+```
+
+This architecture enables reliable planning, tool usage, and iterative website generation.
+
+---
+
+## Features
+
+### 🌐 Homepage Cloning
+
+Clone any public homepage by simply providing a URL.
 
 VOIDCLI automatically:
 
@@ -25,7 +49,7 @@ VOIDCLI automatically:
 - Extracts JavaScript assets
 - Extracts image assets
 - Downloads assets locally
-- Rewrites URLs to local paths
+- Rewrites asset URLs
 - Creates a self-contained clone
 
 Example:
@@ -40,16 +64,16 @@ Generated output:
 generated/
 └── example clone/
     ├── index.html
-    ├── assets/
+    └── assets/
 ```
 
-Homepage cloning is limited to a single page and does not perform recursive crawling.
+Homepage cloning is intentionally limited to a single page and does not perform recursive crawling.
 
 ---
 
-## 🎨 Website Generation
+### 🎨 Website Generation
 
-Generate modern websites from natural language prompts.
+Generate complete websites using natural language.
 
 Example:
 
@@ -57,36 +81,38 @@ Example:
 Create a modern startup landing page for NIRBHAYA
 ```
 
-The agent can generate:
+Supported website types:
 
-- Landing pages
-- SaaS websites
 - Startup websites
-- Portfolio websites
+- SaaS landing pages
 - Product pages
-- Marketing pages
+- Portfolio websites
+- Marketing websites
+- Event websites
+- Business websites
 
 Design capabilities:
 
+- Modern responsive layouts
 - Glassmorphism
 - Gradients
 - Animations
-- Responsive layouts
-- Testimonials
+- Hero sections
 - Feature sections
 - Pricing sections
+- Testimonials
 - CTA sections
 
 ---
 
-## ✏️ Website Editing
+### ✏️ Website Editing
 
 Modify existing generated websites.
 
 Examples:
 
 ```text
-Change the hero section background
+Change the hero background to a gradient
 ```
 
 ```text
@@ -101,18 +127,18 @@ VOIDCLI attempts targeted edits before regenerating entire pages.
 
 ---
 
-## 🚀 Automatic Preview Server
+### 🚀 Automatic Preview Server
 
 After generation or cloning, VOIDCLI automatically launches a local preview server.
 
 Features:
 
-- Automatic free-port detection
+- Automatic port selection
 - Existing preview cleanup
 - Browser auto-open
 - Preview URL reporting
 
-Typical preview URL:
+Example:
 
 ```text
 http://127.0.0.1:3000
@@ -120,9 +146,9 @@ http://127.0.0.1:3000
 
 ---
 
-## 🤖 ReAct Agent Architecture
+### 🤖 ReAct Agent Architecture
 
-The agent follows a strict reasoning loop:
+VOIDCLI follows a strict reasoning workflow:
 
 ```text
 START
@@ -132,20 +158,82 @@ OBSERVE
 OUTPUT
 ```
 
-This enables:
+Benefits:
 
-- Tool-based execution
 - Multi-step planning
-- Website generation workflows
-- Homepage cloning workflows
+- Tool-driven execution
+- Structured reasoning
+- Reduced hallucinations
+- Improved reliability
 
 ---
 
-# Tech Stack
+## Screenshots
+
+### CLI Interface
+
+Add your screenshots inside:
+
+```text
+docs/screenshots/
+```
+
+Example:
+
+```text
+docs/
+└── screenshots/
+    ├── cli.png
+    ├── cloning.png
+    └── generation.png
+```
+
+---
+
+## Architecture
+
+```text
+User Prompt
+      │
+      ▼
+ ┌───────────┐
+ │ ReAct AI  │
+ │   Agent   │
+ └─────┬─────┘
+       │
+       ▼
+ ┌───────────┐
+ │ Tool Use  │
+ └─────┬─────┘
+       │
+ ┌─────┼────────────────┐
+ ▼     ▼                ▼
+Files  Gemini      Website Assets
+       API
+
+       ▼
+ Generated Website
+
+       ▼
+ Preview Server
+```
+
+---
+
+## Tech Stack
+
+### Core
 
 - Node.js
 - TypeScript
+
+### AI
+
 - Gemini API
+- Vertex AI
+
+### Libraries
+
 - Axios
 - Cheerio
 - Zod
@@ -156,7 +244,46 @@ This enables:
 
 ---
 
-# Installation
+## Project Structure
+
+```text
+VOIDCLI/
+│
+├── src/
+│   ├── agent.ts
+│   ├── checkpoint.ts
+│   ├── cli.ts
+│   ├── theme.ts
+│   ├── tools.ts
+│   ├── types.ts
+│   └── vertex.ts
+│
+├── generated/
+│   ├── website clone/
+│   ├── website clone 2/
+│   └── website clone 3/
+│
+├── docs/
+│   └── screenshots/
+│
+├── package.json
+├── tsconfig.json
+├── .env.example
+├── LICENSE
+└── README.md
+```
+
+---
+
+## Installation
+
+Clone the repository:
+
+```bash
+git clone https://github.com/Gladiespriyanka/voidcli.git
+
+cd voidcli
+```
 
 Install dependencies:
 
@@ -166,7 +293,7 @@ npm install
 
 ---
 
-# Environment Variables
+## Environment Variables
 
 Create a `.env` file:
 
@@ -176,9 +303,9 @@ GEMINI_API_KEY=your_gemini_api_key
 
 ---
 
-# Running VOIDCLI
+## Running VOIDCLI
 
-Development mode:
+Development:
 
 ```bash
 npm run dev
@@ -198,27 +325,27 @@ npm start
 
 ---
 
-# Example Commands
+## Example Commands
 
-Clone a homepage:
+### Clone a Homepage
 
 ```text
 https://example.com
 ```
 
-Generate a website:
+### Generate a Startup Website
 
 ```text
 Create a modern startup landing page for NIRBHAYA
 ```
 
-Generate a SaaS dashboard:
+### Generate a SaaS Dashboard
 
 ```text
 Create a professional AI analytics dashboard
 ```
 
-Edit an existing website:
+### Edit Existing Website
 
 ```text
 Change the hero heading to Welcome
@@ -226,29 +353,9 @@ Change the hero heading to Welcome
 
 ---
 
-# Project Structure
+## Security
 
-```text
-src/
-├── agent.ts
-├── checkpoint.ts
-├── cli.ts
-├── theme.ts
-├── tools.ts
-├── types.ts
-├── vertex.ts
-
-generated/
-├── website clone/
-├── website clone 2/
-├── website clone 3/
-```
-
----
-
-# Security
-
-## Tool Sandboxing
+### Tool Sandboxing
 
 All write operations are restricted to:
 
@@ -256,17 +363,17 @@ All write operations are restricted to:
 generated/
 ```
 
-The agent cannot write outside the generated directory.
+The agent cannot write outside this directory.
 
 ---
 
-## Homepage Cloning Restrictions
+### Homepage Cloning Restrictions
 
 Allowed:
 
 - Public homepages
-- Public CSS
-- Public JavaScript
+- Public CSS assets
+- Public JavaScript assets
 - Public images
 
 Not Allowed:
@@ -274,11 +381,11 @@ Not Allowed:
 - Recursive crawling
 - Login-protected content
 - Authenticated sessions
-- Bypassing access controls
+- Access control bypasses
 
 ---
 
-# Reliability Features
+## Reliability Features
 
 VOIDCLI includes:
 
@@ -288,18 +395,43 @@ VOIDCLI includes:
 - No-progress detection
 - JSON schema validation
 - Automatic preview launching
+- Structured execution tracing
 
 ---
 
-# Troubleshooting
+## Roadmap
 
-## TypeScript Check
+### Current
+
+- [x] Homepage cloning
+- [x] Website generation
+- [x] Website editing
+- [x] Asset extraction
+- [x] Preview server
+- [x] ReAct execution loop
+
+### Planned
+
+- [ ] Multi-page website generation
+- [ ] React project generation
+- [ ] Next.js support
+- [ ] Tailwind CSS support
+- [ ] AI code review
+- [ ] Project refactoring agent
+- [ ] Vercel deployment integration
+- [ ] Plugin system
+
+---
+
+## Troubleshooting
+
+### TypeScript Check
 
 ```bash
 npm run check
 ```
 
-Expected result:
+Expected:
 
 ```text
 tsc --noEmit
@@ -309,9 +441,9 @@ with no errors.
 
 ---
 
-## Preview Not Loading
+### Preview Not Loading
 
-Manually test:
+Run manually:
 
 ```bash
 npx http-server generated/website\ clone
@@ -325,9 +457,9 @@ http://127.0.0.1:8080
 
 ---
 
-## Gemini Quota Exceeded
+### Gemini Quota Exceeded
 
-Example error:
+Example:
 
 ```text
 429 Too Many Requests
@@ -343,6 +475,52 @@ Solutions:
 
 - Wait for quota reset
 - Enable billing
-- Use another Gemini model
+- Use a different Gemini model
 
 ---
+
+## Contributing
+
+Contributions are welcome.
+
+To contribute:
+
+1. Fork the repository
+2. Create a feature branch
+3. Commit your changes
+4. Push your branch
+5. Open a Pull Request
+
+---
+
+## License
+
+This project is licensed under the MIT License.
+
+See the [LICENSE](LICENSE) file for details.
+
+---
+
+## Acknowledgements
+
+- Google Gemini
+- Vertex AI
+- TypeScript
+- Axios
+- Cheerio
+- Open Source Community
+
+---
+
+## Author
+
+**Gladies Priyanka**
+
+GitHub: https://github.com/Gladiespriyanka
+
+## License
+
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+
+
+If you found this project useful, consider giving it a ⭐ on GitHub.
