@@ -493,14 +493,6 @@ To contribute:
 
 ---
 
-## License
-
-This project is licensed under the MIT License.
-
-See the [LICENSE](LICENSE) file for details.
-
----
-
 ## Acknowledgements
 
 - Google Gemini
@@ -511,12 +503,3 @@ See the [LICENSE](LICENSE) file for details.
 - Open Source Community
 
 ---
-
-## Author
-
-**Gladies Priyanka**
-
-GitHub: https://github.com/Gladiespriyanka
-
-
-If you found this project useful, consider giving it a ⭐ on GitHub.
