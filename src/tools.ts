@@ -1,6 +1,13 @@
 import path from "node:path";
-import { mkdir, writeFile, readFile, readdir } from "node:fs/promises";
-import { execFile, spawn, ChildProcess } from "node:child_process";
+import {
+  mkdir,
+  writeFile,
+  readFile,
+  readdir,
+  unlink
+} from "node:fs/promises";
+import { existsSync } from "node:fs";
+import { execFile, exec, spawn, ChildProcess } from "node:child_process";
 import { promisify } from "node:util";
 import net from "node:net";
 import {
@@ -13,6 +20,12 @@ import {
   ReadFileArgsSchema,
   StartPreviewServerArgsSchema,
   WriteFileArgsSchema,
+  RunCommandArgsSchema,
+  SearchFilesArgsSchema,
+  FindFilesArgsSchema,
+  ReplaceTextArgsSchema,
+  DeleteFileArgsSchema,
+  UndoLastEditArgsSchema,
   ToolResult
 } from "./types.js";
 import {
@@ -24,6 +37,7 @@ import {
 } from "./checkpoint.js";
 
 const execFileAsync = promisify(execFile);
+const execAsync = promisify(exec);
 const WORKSPACE_ROOT = process.cwd();
 const GENERATED_ROOT = path.resolve(WORKSPACE_ROOT, "generated");
 const FETCH_CACHE_TOKEN = "__FETCH_CACHE_LATEST__";
@@ -200,9 +214,23 @@ async function startPreviewServerTool(rawArgs: unknown): Promise<ToolResult> {
 
   let child: ChildProcess;
 
+  console.log("Launching preview server...");
   if (process.platform === "win32") {
+    const npmPrefix =
+      process.env.APPDATA &&
+      path.join(process.env.APPDATA, "npm", "npx.cmd");
+
+    const npxExecutable =
+      npmPrefix && existsSync(npmPrefix)
+        ? npmPrefix
+        : "npx";
+
+    console.log("Executable:", npxExecutable);
+    console.log("Directory:", fullPath);
+    console.log("Port:", port);
+
     child = spawn(
-      "npx.cmd",
+      npxExecutable,
       [
         "http-server",
         fullPath,
@@ -213,13 +241,16 @@ async function startPreviewServerTool(rawArgs: unknown): Promise<ToolResult> {
       ],
       {
         cwd: WORKSPACE_ROOT,
-        detached: true,
+        shell: true,
+        windowsHide: true,
         stdio: "ignore"
       }
     );
-
-    child.unref();
   } else {
+    console.log("Executable:", "npx");
+    console.log("Directory:", fullPath);
+    console.log("Port:", port);
+
     child = spawn(
       "npx",
       [
@@ -232,13 +263,21 @@ async function startPreviewServerTool(rawArgs: unknown): Promise<ToolResult> {
       ],
       {
         cwd: WORKSPACE_ROOT,
-        detached: true,
+        shell: true,
         stdio: "ignore"
       }
     );
-
-    child.unref();
   }
+
+  child.on("error", (err) => {
+    console.error("Spawn Error:");
+    console.error(err);
+  });
+  child.on("exit", (code, signal) => {
+    console.log("Preview exited");
+    console.log("Code:", code);
+    console.log("Signal:", signal);
+  });
 
   previewProcess = child;
   previewUrl = url;
@@ -247,11 +286,278 @@ async function startPreviewServerTool(rawArgs: unknown): Promise<ToolResult> {
 
   await new Promise((resolve) => setTimeout(resolve, 2000));
 
+  if (child.exitCode !== null) {
+    return {
+      ok: false,
+      content: `Preview server exited immediately with code ${child.exitCode}`
+    };
+  }
+
   return {
     ok: true,
     content: `Preview available at ${url}\nOutput directory: ${toRelative(fullPath)}`,
     previewUrl: url
   };
+}
+
+async function runCommandTool(rawArgs: unknown): Promise<ToolResult> {
+  const parsed = RunCommandArgsSchema.safeParse(rawArgs);
+
+  if (!parsed.success) {
+    return {
+      ok: false,
+      content: parsed.error.issues[0]?.message ?? "invalid args"
+    };
+  }
+
+  const allowedCommands = [
+    "npm",
+    "npx",
+    "node",
+    "git",
+    "tsc",
+    "vite"
+  ];
+
+  const firstCommand = parsed.data.command.trim().split(/\s+/)[0];
+
+  if (!allowedCommands.includes(firstCommand)) {
+    return {
+      ok: false,
+      content: `Command "${firstCommand}" is not allowed.`
+    };
+  }
+
+  try {
+    const cwd = parsed.data.cwd
+      ? ensureInWorkspace(parsed.data.cwd)
+      : WORKSPACE_ROOT;
+
+    const { stdout, stderr } = await execAsync(parsed.data.command, {
+      cwd,
+      maxBuffer: 10 * 1024 * 1024
+    });
+
+    return {
+      ok: true,
+      content: [
+        `Command: ${parsed.data.command}`,
+        stdout && `STDOUT:\n${stdout}`,
+        stderr && `STDERR:\n${stderr}`
+      ]
+        .filter(Boolean)
+        .join("\n\n")
+    };
+  } catch (err: any) {
+    return {
+      ok: false,
+      content: [
+        `Command failed: ${parsed.data.command}`,
+        err.stdout && `STDOUT:\n${err.stdout}`,
+        err.stderr && `STDERR:\n${err.stderr}`,
+        err.message
+      ]
+        .filter(Boolean)
+        .join("\n\n")
+    };
+  }
+}
+
+async function searchFilesTool(rawArgs: unknown): Promise<ToolResult> {
+  const parsed = SearchFilesArgsSchema.safeParse(rawArgs);
+
+  if (!parsed.success) {
+    return {
+      ok: false,
+      content: parsed.error.issues[0]?.message ?? "invalid args"
+    };
+  }
+
+  const root = ensureInWorkspace(parsed.data.root);
+  const query = parsed.data.query.toLowerCase();
+  const extensions = parsed.data.extensions;
+
+  const matches: string[] = [];
+
+  async function walk(dir: string) {
+    const entries = await readdir(dir, { withFileTypes: true });
+
+    for (const entry of entries) {
+      const full = path.join(dir, entry.name);
+
+      if (entry.isDirectory()) {
+        await walk(full);
+        continue;
+      }
+
+      if (
+        extensions &&
+        !extensions.some((ext) => entry.name.endsWith(ext))
+      ) {
+        continue;
+      }
+
+      try {
+        const text = await readFile(full, "utf8");
+        const lines = text.split("\n");
+
+        lines.forEach((line, index) => {
+          if (line.toLowerCase().includes(query)) {
+            matches.push(`${toRelative(full)}:${index + 1}: ${line.trim()}`);
+          }
+        });
+      } catch {}
+    }
+  }
+
+  await walk(root);
+
+  return {
+    ok: true,
+    content:
+      matches.length === 0
+        ? "No matching files."
+        : matches.join("\n")
+  };
+}
+
+async function findFilesTool(rawArgs: unknown): Promise<ToolResult> {
+  const parsed = FindFilesArgsSchema.safeParse(rawArgs);
+
+  if (!parsed.success) {
+    return {
+      ok: false,
+      content: parsed.error.issues[0]?.message ?? "invalid args"
+    };
+  }
+
+  const root = ensureInWorkspace(parsed.data.root);
+  const extensions = parsed.data.extensions;
+
+  const files: string[] = [];
+
+  async function walk(dir: string) {
+    const entries = await readdir(dir, { withFileTypes: true });
+
+    for (const entry of entries) {
+      const full = path.join(dir, entry.name);
+
+      if (entry.isDirectory()) {
+        await walk(full);
+        continue;
+      }
+
+      if (
+        extensions &&
+        !extensions.some((ext) => entry.name.endsWith(ext))
+      ) {
+        continue;
+      }
+
+      files.push(toRelative(full));
+    }
+  }
+
+  await walk(root);
+
+  return {
+    ok: true,
+    content: files.join("\n")
+  };
+}
+
+async function replaceTextTool(rawArgs: unknown): Promise<ToolResult> {
+  const parsed = ReplaceTextArgsSchema.safeParse(rawArgs);
+
+  if (!parsed.success) {
+    return {
+      ok: false,
+      content: parsed.error.issues[0]?.message ?? "invalid args"
+    };
+  }
+
+  const fullPath = ensureInWorkspace(parsed.data.path);
+
+  try {
+    const original = await readFile(fullPath, "utf8");
+    const updated = original.replaceAll(parsed.data.search, parsed.data.replace);
+
+    if (updated === original) {
+      return {
+        ok: true,
+        content: `No occurrences of "${parsed.data.search}" found in ${toRelative(fullPath)}`
+      };
+    }
+
+    await writeFile(fullPath + ".bak", original, "utf8");
+    await writeFile(fullPath, updated, "utf8");
+
+    return {
+      ok: true,
+      content: `Replaced "${parsed.data.search}" with "${parsed.data.replace}" in ${toRelative(fullPath)}`
+    };
+  } catch (err: any) {
+    return {
+      ok: false,
+      content: `Failed to replace text in ${toRelative(fullPath)}: ${err?.message ?? String(err)}`
+    };
+  }
+}
+
+async function deleteFileTool(rawArgs: unknown): Promise<ToolResult> {
+  const parsed = DeleteFileArgsSchema.safeParse(rawArgs);
+
+  if (!parsed.success) {
+    return {
+      ok: false,
+      content: parsed.error.issues[0]?.message ?? "invalid args"
+    };
+  }
+
+  const fullPath = ensureInWorkspace(parsed.data.path);
+
+  try {
+    const original = await readFile(fullPath, "utf8");
+
+    await writeFile(fullPath + ".bak", original, "utf8");
+    await unlink(fullPath);
+    return {
+      ok: true,
+      content: `Deleted file: ${toRelative(fullPath)}`
+    };
+  } catch (err: any) {
+    return {
+      ok: false,
+      content: `Failed to delete file ${toRelative(fullPath)}: ${err?.message ?? String(err)}`
+    };
+  }
+}
+
+async function undoLastEditTool(rawArgs: unknown): Promise<ToolResult> {
+  const parsed = UndoLastEditArgsSchema.safeParse(rawArgs);
+
+  if (!parsed.success) {
+    return {
+      ok: false,
+      content: parsed.error.issues[0]?.message ?? "invalid args"
+    };
+  }
+
+  const fullPath = ensureInWorkspace(parsed.data.path);
+
+  try {
+    const backup = await readFile(fullPath + ".bak", "utf8");
+    await writeFile(fullPath, backup, "utf8");
+    return {
+      ok: true,
+      content: `Restored ${toRelative(fullPath)}`
+    };
+  } catch (err: any) {
+    return {
+      ok: false,
+      content: `Failed to restore backup for ${toRelative(fullPath)}: ${err?.message ?? String(err)}`
+    };
+  }
 }
 
 async function fetchPageTool(rawArgs: unknown): Promise<ToolResult> {
@@ -380,6 +686,14 @@ export const toolMap = {
   listDir: listDirTool,
   openInBrowser: openInBrowserTool,
   startPreviewServer: startPreviewServerTool,
+
+  runCommand: runCommandTool,
+  searchFiles: searchFilesTool,
+  findFiles: findFilesTool,
+  replaceText: replaceTextTool,
+  deleteFile: deleteFileTool,
+  undoLastEdit: undoLastEditTool,
+
   fetchPage: fetchPageTool,
   extractAssets: extractAssetsTool,
   downloadAsset: downloadAssetTool

@@ -1,505 +1,472 @@
 # VOIDCLI
+### AI-Powered Terminal Development Agent for Website Generation, Cloning & Intelligent Code Automation
 
-> A conversational AI-powered terminal agent that can generate websites, clone public homepages, edit existing projects, and launch instant previews using a structured ReAct-style reasoning loop powered by Gemini.
+<p align="center">
 
-![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue)
-![Node.js](https://img.shields.io/badge/Node.js-20+-green)
-![Gemini](https://img.shields.io/badge/Google-Gemini-orange)
-![License](https://img.shields.io/badge/License-MIT-yellow)
+Build websites. Clone webpages. Edit code. Run development workflows.
+All from natural language inside your terminal.
+
+</p>
 
 ---
 
 ## Overview
 
-VOIDCLI is an AI terminal assistant that uses a strict ReAct workflow to reason, plan, execute tools, and generate outputs.
+**VOIDCLI** is an AI-powered terminal development agent built using **Google Gemini** that transforms natural language instructions into real software engineering tasks.
 
-The agent can:
+Instead of behaving like a simple chatbot, VOIDCLI follows a structured **Reason → Act → Observe** workflow that enables it to think, choose tools, inspect results, recover from failures, and continue until a task is completed.
 
-- Generate complete websites from prompts
-- Clone public homepages
-- Download and localize website assets
-- Edit generated websites
-- Launch instant previews
-- Execute multi-step workflows through tool use
+Whether you're creating an entirely new landing page, cloning an existing website, searching a codebase, modifying source files, or running development commands, VOIDCLI acts as an intelligent command-line development assistant.
 
-VOIDCLI follows a structured execution loop:
-
-```text
-START
-THINK
-TOOL
-OBSERVE
-OUTPUT
-```
-
-This architecture enables reliable planning, tool usage, and iterative website generation.
+It combines Large Language Models, structured reasoning, secure tooling, filesystem automation, website asset processing, and development workflows into one seamless CLI experience.
 
 ---
 
-## Features
+# Demo Workflow
 
-### 🌐 Homepage Cloning
-
-Clone any public homepage by simply providing a URL.
-
-VOIDCLI automatically:
-
-- Fetches homepage HTML
-- Extracts CSS assets
-- Extracts JavaScript assets
-- Extracts image assets
-- Downloads assets locally
-- Rewrites asset URLs
-- Creates a self-contained clone
-
-Example:
-
-```text
-https://example.com
 ```
-
-Generated output:
-
-```text
-generated/
-└── example clone/
-    ├── index.html
-    └── assets/
-```
-
-Homepage cloning is intentionally limited to a single page and does not perform recursive crawling.
-
----
-
-### 🎨 Website Generation
-
-Generate complete websites using natural language.
-
-Example:
-
-```text
-Create a modern startup landing page for NIRBHAYA
-```
-
-Supported website types:
-
-- Startup websites
-- SaaS landing pages
-- Product pages
-- Portfolio websites
-- Marketing websites
-- Event websites
-- Business websites
-
-Design capabilities:
-
-- Modern responsive layouts
-- Glassmorphism
-- Gradients
-- Animations
-- Hero sections
-- Feature sections
-- Pricing sections
-- Testimonials
-- CTA sections
-
----
-
-### ✏️ Website Editing
-
-Modify existing generated websites.
-
-Examples:
-
-```text
-Change the hero background to a gradient
-```
-
-```text
-Replace the heading with "Welcome to NIRBHAYA"
-```
-
-```text
-Add a pricing section
-```
-
-VOIDCLI attempts targeted edits before regenerating entire pages.
-
----
-
-### 🚀 Automatic Preview Server
-
-After generation or cloning, VOIDCLI automatically launches a local preview server.
-
-Features:
-
-- Automatic port selection
-- Existing preview cleanup
-- Browser auto-open
-- Preview URL reporting
-
-Example:
-
-```text
-http://127.0.0.1:3000
-```
-
----
-
-### 🤖 ReAct Agent Architecture
-
-VOIDCLI follows a strict reasoning workflow:
-
-```text
-START
-THINK
-TOOL
-OBSERVE
-OUTPUT
-```
-
-Benefits:
-
-- Multi-step planning
-- Tool-driven execution
-- Structured reasoning
-- Reduced hallucinations
-- Improved reliability
-
----
-
-## Screenshots
-
-### CLI Interface
-
-Add your screenshots inside:
-
-```text
-docs/screenshots/
-```
-
-Example:
-
-```text
-docs/
-└── screenshots/
-    ├── cli.png
-    ├── cloning.png
-    └── generation.png
-```
-
----
-
-## Architecture
-
-```text
 User Prompt
       │
       ▼
- ┌───────────┐
- │ ReAct AI  │
- │   Agent   │
- └─────┬─────┘
-       │
-       ▼
- ┌───────────┐
- │ Tool Use  │
- └─────┬─────┘
-       │
- ┌─────┼────────────────┐
- ▼     ▼                ▼
-Files  Gemini      Website Assets
-       API
-
-       ▼
- Generated Website
-
-       ▼
- Preview Server
+ Google Gemini
+      │
+      ▼
+ Structured ReAct Planner
+      │
+ ┌────┴──────────────────────┐
+ │                           │
+ ▼                           ▼
+Filesystem Tools        Website Tools
+ │                           │
+ ▼                           ▼
+Dev Tools              Asset Processor
+ │                           │
+ └──────────────┬────────────┘
+                ▼
+      Generated Website /
+      Code Changes /
+      Preview Server
 ```
 
 ---
 
-## Tech Stack
+# Key Features
 
-### Core
+## AI Website Generation
+
+Describe your product, startup, SaaS, portfolio, or business idea in plain English.
+
+VOIDCLI automatically generates a production-ready responsive landing page including:
+
+- Hero section
+- Feature cards
+- Pricing section
+- Testimonials
+- Call-to-action
+- Footer
+- Responsive layout
+- Modern gradients
+- Glassmorphism
+- Animations
+- Clean component structure
+
+No templates are hardcoded—the entire page is generated dynamically by Gemini.
+
+---
+
+## Intelligent Website Cloning
+
+Clone the homepage of any publicly accessible website.
+
+VOIDCLI automatically:
+
+- Downloads HTML
+- Detects linked CSS
+- Downloads JavaScript
+- Extracts images
+- Rewrites asset paths
+- Removes unsafe redirects
+- Creates an offline working copy
+
+The generated website can be viewed locally without internet access.
+
+---
+
+## Local Preview Server
+
+After generation or cloning, VOIDCLI automatically launches a lightweight preview server.
+
+No manual setup.
+
+Simply open:
+
+```
+http://127.0.0.1:<port>
+```
+
+and instantly preview the generated website inside your browser.
+
+---
+
+## AI Development Assistant
+
+VOIDCLI is capable of assisting with real software projects.
+
+It can:
+
+- Search files
+- Find specific code
+- Replace text safely
+- Edit files
+- Delete files with backups
+- Undo previous edits
+- Navigate project directories
+
+This allows VOIDCLI to function as an intelligent coding companion directly from the terminal.
+
+---
+
+## Safe Command Execution
+
+The agent can execute common development commands while preventing arbitrary shell execution.
+
+Supported workflows include:
+
+- npm
+- node
+- npx
+- git
+- tsc
+- vite
+
+Command output is captured, analyzed, and fed back into the reasoning loop for autonomous decision making.
+
+---
+
+## Structured AI Reasoning
+
+Unlike traditional chat-based assistants, VOIDCLI operates through a deterministic multi-step reasoning loop.
+
+Each interaction follows:
+
+```
+START
+   ↓
+THINK
+   ↓
+TOOL
+   ↓
+OBSERVE
+   ↓
+THINK
+   ↓
+OUTPUT
+```
+
+This enables the model to:
+
+- reason before acting
+- inspect intermediate results
+- recover from failures
+- avoid infinite loops
+- perform multi-step tasks reliably
+
+---
+
+# Architecture
+
+```
+                 User Prompt
+                      │
+                      ▼
+               Interactive CLI
+                      │
+                      ▼
+             Gemini AI Reasoning
+                      │
+        ┌─────────────┴─────────────┐
+        │                           │
+        ▼                           ▼
+  Tool Dispatcher            Step Controller
+        │                           │
+ ┌──────┼───────────────┐            │
+ │      │               │            │
+ ▼      ▼               ▼            ▼
+Filesystem   Website Tools   Dev Tools
+        │
+        ▼
+ Generated Output
+```
+
+---
+
+# Project Structure
+
+```
+src/
+│
+├── cli.ts
+│      Interactive terminal interface
+│
+├── agent.ts
+│      Core ReAct reasoning loop
+│
+├── tools.ts
+│      Filesystem, website and developer tools
+│
+├── checkpoint.ts
+│      Website cloning, asset extraction and rewriting
+│
+├── vertex.ts
+│      Google Gemini integration
+│
+├── types.ts
+│      Shared schemas and type definitions
+│
+generated/
+│
+├── Generated websites
+│
+package.json
+README.md
+.env
+```
+
+---
+
+# Technology Stack
+
+### AI
+
+- Google Gemini
+- Prompt Engineering
+- Structured Tool Calling
+
+### Backend
 
 - Node.js
 - TypeScript
 
-### AI
+### Parsing
 
-- Gemini API
-- Vertex AI
-
-### Libraries
-
-- Axios
 - Cheerio
+- Axios
+
+### Validation
+
 - Zod
-- Ora
+
+### CLI
+
 - Chalk
-- Boxen
+- Readline
+
+### Development
+
+- npm
+- Git
 - http-server
 
 ---
 
-## Project Structure
+# Installation
 
-```text
-VOIDCLI/
-│
-├── src/
-│   ├── agent.ts
-│   ├── checkpoint.ts
-│   ├── cli.ts
-│   ├── theme.ts
-│   ├── tools.ts
-│   ├── types.ts
-│   └── vertex.ts
-│
-├── generated/
-│   ├── website clone/
-│   ├── website clone 2/
-│   └── website clone 3/
-│
-├── docs/
-│   └── screenshots/
-│
-├── package.json
-├── tsconfig.json
-├── .env.example
-├── LICENSE
-└── README.md
-```
-
----
-
-## Installation
-
-Clone the repository:
+Clone the repository
 
 ```bash
-git clone https://github.com/Gladiespriyanka/voidcli.git
+git clone https://github.com/your-username/VOIDCLI.git
 
-cd voidcli
+cd VOIDCLI
 ```
 
-Install dependencies:
+Install dependencies
 
 ```bash
 npm install
 ```
 
----
-
-## Environment Variables
-
-Create a `.env` file:
+Create a `.env`
 
 ```env
-GEMINI_API_KEY=your_gemini_api_key
+GEMINI_API_KEY=YOUR_API_KEY
 ```
 
 ---
 
-## Running VOIDCLI
-
-Development:
-
-```bash
-npm run dev
-```
-
-Build:
-
-```bash
-npm run build
-```
-
-Production:
+# Running VOIDCLI
 
 ```bash
 npm start
 ```
 
+or
+
+```bash
+node dist/cli.js
+```
+
+The interactive terminal launches:
+
+```
+VOIDCLI >
+```
+
+Simply describe what you want.
+
 ---
 
-## Example Commands
+# Example Prompts
 
-### Clone a Homepage
+### Generate a Website
 
-```text
-https://example.com
 ```
-
-### Generate a Startup Website
-
-```text
-Create a modern startup landing page for NIRBHAYA
-```
-
-### Generate a SaaS Dashboard
-
-```text
-Create a professional AI analytics dashboard
-```
-
-### Edit Existing Website
-
-```text
-Change the hero heading to Welcome
+Create a modern landing page for an AI startup with a dark theme, pricing section, testimonials and smooth animations.
 ```
 
 ---
 
-## Security
+### Clone a Website
 
-### Tool Sandboxing
-
-All write operations are restricted to:
-
-```text
-generated/
 ```
-
-The agent cannot write outside this directory.
+Clone the homepage of https://example.com
+```
 
 ---
 
-### Homepage Cloning Restrictions
+### Search a Project
 
-Allowed:
+```
+Find every use of useEffect inside src.
+```
 
-- Public homepages
-- Public CSS assets
-- Public JavaScript assets
-- Public images
+---
 
-Not Allowed:
+### Refactor Code
 
+```
+Replace every occurrence of foo with bar inside utils.ts
+```
+
+---
+
+### Execute Development Tasks
+
+```
+Run npm test and fix obvious issues.
+```
+
+---
+
+# Intelligent Workflow
+
+A single request may trigger multiple autonomous operations.
+
+For example:
+
+```
+Generate Website
+
+↓
+
+Create Folder
+
+↓
+
+Write HTML
+
+↓
+
+Write CSS
+
+↓
+
+Write JavaScript
+
+↓
+
+Start Local Server
+
+↓
+
+Open Browser
+
+↓
+
+Return Generated Files
+```
+
+All without additional user intervention.
+
+---
+
+# Safety
+
+VOIDCLI is designed with secure execution in mind.
+
+### Workspace Isolation
+
+Generated websites are restricted to the `generated/` directory.
+
+---
+
+### Safe File Editing
+
+Every edit creates a backup before modifications are applied.
+
+Edits can be reverted using the built-in undo mechanism.
+
+---
+
+### Restricted Commands
+
+Only approved development commands can be executed.
+
+Arbitrary shell execution is intentionally blocked.
+
+---
+
+### Robust AI Control
+
+The reasoning engine includes:
+
+- invalid JSON recovery
+- retry mechanisms
+- loop detection
+- progress monitoring
+- rate-limit handling
+- bounded reasoning steps
+
+making the agent significantly more reliable during autonomous execution.
+
+---
+
+# Future Improvements
+
+- Multi-page website cloning
 - Recursive crawling
-- Login-protected content
-- Authenticated sessions
-- Access control bypasses
+- Authentication-aware cloning
+- React project generation
+- Next.js support
+- Tailwind generation
+- Docker integration
+- GitHub repository understanding
+- Multi-model support (Gemini, OpenAI, Claude)
+- Plugin architecture
+- Browser automation
+- Automated testing workflows
 
 ---
 
-## Reliability Features
+# Why VOIDCLI?
 
-VOIDCLI includes:
+Traditional AI assistants generate text.
 
-- Adaptive step budgets
-- Loop detection
-- Repeated THINK detection
-- No-progress detection
-- JSON schema validation
-- Automatic preview launching
-- Structured execution tracing
+VOIDCLI performs real development work.
+
+It reasons about tasks, invokes tools, edits files, launches servers, clones websites, and assists software development through an intelligent terminal interface—bringing together AI reasoning and practical automation in a unified developer experience.
 
 ---
 
-## Roadmap
+# License
 
-### Current
-
-- [x] Homepage cloning
-- [x] Website generation
-- [x] Website editing
-- [x] Asset extraction
-- [x] Preview server
-- [x] ReAct execution loop
-
-### Planned
-
-- [ ] Multi-page website generation
-- [ ] React project generation
-- [ ] Next.js support
-- [ ] Tailwind CSS support
-- [ ] AI code review
-- [ ] Project refactoring agent
-- [ ] Vercel deployment integration
-- [ ] Plugin system
-
----
-
-## Troubleshooting
-
-### TypeScript Check
-
-```bash
-npm run check
-```
-
-Expected:
-
-```text
-tsc --noEmit
-```
-
-with no errors.
-
----
-
-### Preview Not Loading
-
-Run manually:
-
-```bash
-npx http-server generated/website\ clone
-```
-
-Open:
-
-```text
-http://127.0.0.1:8080
-```
-
----
-
-### Gemini Quota Exceeded
-
-Example:
-
-```text
-429 Too Many Requests
-```
-
-Cause:
-
-```text
-Daily Gemini free-tier quota reached.
-```
-
-Solutions:
-
-- Wait for quota reset
-- Enable billing
-- Use a different Gemini model
-
----
-
-## Contributing
-
-Contributions are welcome.
-
-To contribute:
-
-1. Fork the repository
-2. Create a feature branch
-3. Commit your changes
-4. Push your branch
-5. Open a Pull Request
-
----
-
-## Acknowledgements
-
-- Google Gemini
-- Vertex AI
-- TypeScript
-- Axios
-- Cheerio
-- Open Source Community
-
----
+This project is licensed under the **MIT License**.

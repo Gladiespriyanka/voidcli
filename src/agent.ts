@@ -10,11 +10,12 @@ import { AgentRunResult, ChatMessage, ModelStepSchema } from "./types.js";
 
 const BASE_MAX_STEPS = Number(process.env.MAX_STEPS ?? 12);
 const MAX_STEP_LIMIT = 300;
-const MAX_JSON_RETRIES = Number(process.env.MAX_JSON_RETRIES ?? 1);
+const MAX_JSON_RETRIES = Number(process.env.MAX_JSON_RETRIES ?? 3);
 const MAX_REPEAT_THINK = Number(process.env.MAX_REPEAT_THINK ?? 2);
-const MAX_NO_PROGRESS_STEPS = Number(process.env.MAX_NO_PROGRESS_STEPS ?? 6);
+const MAX_NO_PROGRESS_STEPS = Number(process.env.MAX_NO_PROGRESS_STEPS ?? 8);
 const URL_REGEX = /(https?:\/\/[^\s]+)/i;
 const WEBSITE_GENERATION_PERSONA = `Persona: senior frontend engineer and startup designer.
+
 
 For website creation requests:
 - Generate professional production-quality websites.
@@ -23,12 +24,14 @@ For website creation requests:
 - Create visually impressive startup landing pages.
 - Include hero sections, features, testimonials, pricing and CTA sections when appropriate.
 
+
 For cloning requests:
 - Clone only the requested homepage.
 - Preserve layout and assets where possible.`;
 const systemPrompt = `You are VOIDCLI, a terminal AI assistant.
 Work in a strict step loop inspired by ReAct.
 ${WEBSITE_GENERATION_PERSONA}
+
 
 Return ONLY valid JSON in this exact shape:
 {
@@ -37,6 +40,12 @@ Return ONLY valid JSON in this exact shape:
   "tool_name": "string | null",
   "tool_args": "object | null"
 }
+
+Never explain your reasoning outside the JSON.
+Never output markdown.
+Never output code fences.
+Never apologize.
+Every response must contain exactly one JSON object.
 
 Rules:
 1) Always reason in multiple steps before OUTPUT.
@@ -53,16 +62,33 @@ Rules:
     Never inline huge HTML in tool args.
 5) Never include markdown, code fences, or extra text outside JSON.
 
+If npm install fails:
+- execute runCommand({ "command": "npm install" })
+- retry the previous command once.
+
+If a build fails:
+- inspect the error
+- modify the required files
+- rebuild
+- continue until successful or MAX_STEPS is reached.
+
 Available tools:
 - ensureDir({ "path": "generated/..." })
 - writeFile({ "path": "generated/...", "content": "..." })
 - readFile({ "path": "..." })
 - listDir({ "path": "..." })
+- searchFiles({ "root": ".", "query": "..." })
+- findFiles({ "root": ".", "extensions": [".ts", ".js", ".json"] })
+- runCommand({ "command": "npm test" })
+- undoLastEdit({ "path": "..." })
 - openInBrowser({ "path": "..." })
 - startPreviewServer({ "path": "generated/<run-folder>", "port": 3000 })
 - fetchPage({ "url": "https://example.com" })
 - extractAssets({ "html": "__FETCH_CACHE_LATEST__", "baseUrl": "https://example.com", "outputRoot": "generated/<run-folder>" })
-- writeFile({ "path": "generated/<run-folder>/index.html", "content": "__REWRITTEN_HTML_LATEST__" })`;
+- writeFile({ "path": "generated/<run-folder>/index.html", "content": "__REWRITTEN_HTML_LATEST__" })
+
+Always use findFiles before modifying unfamiliar projects.
+If an edit breaks compilation, restore the previous backup using undoLastEdit.`;
 
 function parseStepJson(modelText: string) {
   const cleaned = modelText
@@ -112,14 +138,6 @@ function getDomainName(url: string): string {
   }
 }
 
-function slugify(value: string): string {
-  return value
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 40);
-}
-
 async function buildGenerationFolder(input: string): Promise<string> {
   const url = extractFirstUrl(input);
   const base = (() => {
@@ -127,9 +145,9 @@ async function buildGenerationFolder(input: string): Promise<string> {
     return getDomainName(url);
   })();
 
-  const baseName = `${base} clone`;
-  let folderName = baseName;
-  let counter = 2;
+  const baseName = `${base}-clone`;
+  const id = Date.now();
+  let folderName = `${baseName}-${id}`;
 
   try {
     const generatedRoot = path.resolve(process.cwd(), "generated");
@@ -138,12 +156,14 @@ async function buildGenerationFolder(input: string): Promise<string> {
       entries.filter((e) => e.isDirectory()).map((e) => e.name)
     );
 
+    // Extremely unlikely, but if collision, fall back to numeric counter
+    let counter = 2;
     while (existingDirs.has(folderName)) {
-      folderName = `${baseName} ${counter}`;
+      folderName = `${baseName}-${id}-${counter}`;
       counter++;
     }
-  } catch (error) {
-    // If 'generated' directory doesn't exist yet, we're fine to use baseName
+  } catch {
+    // If 'generated' directory doesn't exist yet, we're fine to use folderName
   }
 
   return `generated/${folderName}`;
@@ -206,10 +226,19 @@ function estimateInitialStepBudget(input: string): number {
 
 function estimateBudgetFromAssetDensity(
   observeContent: string
-): number | null {
-  // Since we download in the background now, we don't need a massive step budget!
-  // We can just add a small buffer for safety.
-  return Math.min(MAX_STEP_LIMIT, 20);
+): number {
+  const css =
+    Number(observeContent.match(/CSS count: (\d+)/)?.[1] ?? 0);
+  const js =
+    Number(observeContent.match(/JS count: (\d+)/)?.[1] ?? 0);
+  const images =
+    Number(observeContent.match(/IMAGES count: (\d+)/)?.[1] ?? 0);
+
+  const assets = css + js + images;
+
+  if (assets < 30) return 15;
+  if (assets < 80) return 20;
+  return 25;
 }
 
 export async function runAgent(userInput: string): Promise<AgentRunResult> {
@@ -262,7 +291,7 @@ export async function runAgent(userInput: string): Promise<AgentRunResult> {
             : [finalUrl]
         );
       } catch {}
-    }, 1000);
+    }, 1500);
 
     logObserve(previewResult.content);
     messages.push({
@@ -390,10 +419,10 @@ export async function runAgent(userInput: string): Promise<AgentRunResult> {
       logObserve(result.content);
       if (toolName === "extractAssets") {
         const densityBudget = estimateBudgetFromAssetDensity(result.content);
-        if (densityBudget && densityBudget > dynamicMaxSteps) {
+        if (densityBudget > dynamicMaxSteps) {
           dynamicMaxSteps = densityBudget;
           logObserve(
-            `Adaptive step budget increased to ${dynamicMaxSteps}/15 based on homepage asset density.`
+            `Adaptive step budget increased to ${dynamicMaxSteps} steps based on homepage asset density.`
           );
         }
       }
